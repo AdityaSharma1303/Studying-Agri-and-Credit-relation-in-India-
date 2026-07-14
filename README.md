@@ -1,99 +1,82 @@
-# Agricultural Credit and Crop Insurance in India: A Panel Data Analysis
+# Does Farm Credit in India Actually Come With Insurance?
 
-A state-year panel analysis (2017–2022) examining whether growth in agricultural
-credit predicts growth in crop insurance uptake under India's Pradhan Mantri
-Fasal Bima Yojana (PMFBY), and whether that relationship shifted after PMFBY
-enrollment moved from compulsory (loanee-linked) to voluntary in Kharif 2020.
+**Key findings: The relation is not significant, and that gap matters. **
 
-## Motivation
+India's premier crop insurance scheme, Pradhan Mantri Fasal Beema Yojna, used to be automatic: if you took
+out a farm loan, you were signed up for insurance with the premium deducted
+from your crop loan, no extra step required. In 2020, this insurance aspect
+became optional, even for people taking loans. This project asks a simple
+question: **once insurance stopped being automatic, did farmers still end up
+insured, or is the correlative mom?**
 
-Until 2020, farmers taking a seasonal crop loan were automatically enrolled in
-PMFBY, with the premium deducted at source. From Kharif 2020 onward, enrollment
-became voluntary for all farmers, including loanees. This project asks whether
-that administrative "unbundling" of credit and insurance shows up as a
-detectable change in the state-level relationship between the two, and whether
-the relationship differs by a state's climate vulnerability — the states where
-crop insurance arguably matters most.
+I built a state-by-state dataset by merging two different sources covering 2017 to 2022, tracking how much
+agricultural credit each state disbursed and how much crop insurance was
+actually taken up in that particular state, and tested whether the two still moved together after the
+rule change.
 
-## Data
+**What I found:** they don't move together, either before the rule change or
+after. A state's farm credit growing faster or slower in a given year tells
+you almost nothing about whether its insurance uptake grew too. The two are
+more disconnected than you'd expect from a scheme that had the two bundled together, that is, until recently.
 
-| Source | Content | Coverage |
-|---|---|---|
-| RBI Table 157 | State-wise outstanding agricultural credit | 2016–2022 |
-| PMFBY administrative data (Rajya Sabha unstarred questions) | Gross premium and claims paid, by state and insurer | 2017–2022 |
-| CEEW Climate Vulnerability Index | Composite state-level climate vulnerability score | Single cross-section |
+## Why this matters
 
-All three sources are public. Credit and PMFBY data are merged into a
-state-year panel (inner join); CVI is merged on state only, since it has no
-time dimension.
+The decoupling we observe between credit and insurance can be treated as a policy gap.
+Farmers can be taking on more debt without a matching safety net when crops
+fail. States with the highest climate risk are exactly where you'd want that
+link to be strongest, so I also checked whether climate-vulnerable states
+behave differently. They don't, detectably, though with only 26 states in the
+dataset, that's more "we can't see a big effect" than "there's definitely no
+effect at all" (more on that below).
 
-## Method
+## What's in this repo
 
-Two-way fixed-effects panel regression (`linearmodels.PanelOLS`) with
-state-clustered standard errors:
+| File | What it is |
+|---|---|
+| `Agri_Insurance.ipynb` | The full analysis: cleaning the raw data, merging it into one dataset, running the statistics, and building the charts |
+| `RBI_Credit.xlsx` | State-wise farm credit data (Reserve Bank of India) |
+| `RS_Session_260_AU_194_A_to_B_*.csv` | Official crop insurance data by state, one file per year (2017 to 2022), from government records tabled in Parliament |
+| `cvi_scores - Sheet1.csv` | A climate-risk score for each Indian state (CEEW Climate Vulnerability Index) |
 
-```
-log(Premium) ~ log(Credit) + EntityEffects + TimeEffects              (Model 1)
-log(Premium) ~ log(Credit) + post_2020 + log(Credit)×post_2020 + FE   (Model 2)
-log(Premium) ~ log(Credit) + CVI + log(Credit)×CVI + post_2020 + FE   (Model 3)
-log(Claims)  ~ log(Credit) + CVI + log(Credit)×CVI + post_2020 + FE   (Model 3b)
-```
+## How I tested it (for the technically curious)
 
-State fixed effects absorb time-invariant state characteristics; year fixed
-effects absorb shocks common to all states in a given year. Standard errors
-are clustered by state to account for within-state serial correlation.
+I used a panel regression, a statistical method built for exactly this kind
+of "same states, tracked over several years" data. It's designed to strip out
+two things that could otherwise fake a relationship: whatever makes a state
+permanently different (better banking access, richer soil, etc.) and whatever
+hit every state in a given year (a nationwide policy change, a bad monsoon
+year). What's left is the cleanest possible test of whether a state's own
+credit growth predicted its own insurance growth, year to year, and the
+answer, consistently, was no.
 
-## Key findings
-
-- Within-state credit growth does **not** significantly predict within-state
-  PMFBY premium growth in any specification (all p > 0.4).
-- The credit–insurance relationship does not detectably change between the
-  compulsory and voluntary enrollment eras.
-- No significant moderation by climate vulnerability is found, though this
-  should be read alongside the panel's limited statistical power (26 states,
-  unbalanced, 134 observations) rather than as evidence the relationship is
-  genuinely absent.
-- The panel's imbalance is itself informative: states with no PMFBY
-  observations in later years (e.g. Punjab, Gujarat, Andhra Pradesh,
-  Telangana, Jharkhand) either never joined or exited the scheme, consistent
-  with reported adverse-selection and fiscal-burden pressures documented in
-  PMFBY policy literature.
-
-Full derivation of these results, confidence intervals, and a discussion of
-statistical power, the Mundlak (correlated random effects) alternative to a
-standard Hausman test, and a proposed state-exit robustness check are in the
+I also checked this a second way, using a companion technique (a Mundlak-style
+correlated random effects model) that can additionally show whether states
+with historically higher credit also have historically higher insurance, a
+related but different question. That comparison is discussed in the
 notebook.
 
-## Repository structure
+## The honest limitations
 
-```
-.
-├── Agri_Insurance.ipynb       # Full analysis: cleaning, merging, regressions, charts
-├── data/                      # Raw input files (see Data section above)
-├── outputs/                   # Saved charts and regression_results.xlsx
-├── requirements.txt
-└── README.md
-```
+- Only 26 states and 134 data points total. This is a small dataset, so a
+  "no relationship found" result really means "no large relationship is
+  visible," not "definitely zero effect." A smaller, real effect could still
+  be hiding in there undetected.
+- A few states (Punjab, Gujarat, Andhra Pradesh, Telangana, Jharkhand) either
+  never joined the insurance scheme or dropped out partway through. This
+  isn't random, and it's discussed in the notebook as a finding in its own
+  right rather than just a data gap.
+- Insurance "premium collected" is a proxy for uptake, not a perfect
+  headcount of insured farmers.
 
-## Reproducing the analysis
+## Running it yourself
 
 ```bash
-git clone https://github.com/<your-username>/agri-credit-insurance-india.git
-cd agri-credit-insurance-india
-pip install -r requirements.txt
+git clone https://github.com/AdityaSharma1303/Studying-Agri-and-Credit-relation-in-India-.git
+cd Studying-Agri-and-Credit-relation-in-India-
+pip install pandas numpy matplotlib seaborn linearmodels openpyxl jupyter
 jupyter notebook Agri_Insurance.ipynb
 ```
 
-## Limitations
-
-- Small, unbalanced panel (26 states, 134 state-year observations) limits
-  statistical power; the analysis can rule out large elasticities but not
-  small-to-moderate ones.
-- State-level premium totals are an imperfect proxy for farmer-level
-  enrollment, since they also reflect crop-risk pricing and sum insured.
-- Panel attrition (states exiting PMFBY) is not random and is discussed
-  descriptively rather than corrected for formally, given the sample size.
-
 ## Author
 
-Aditya — MA Environmental Economics, Madras School of Economics.
+Aditya, MA Environmental Economics, Madras School of Economics.
