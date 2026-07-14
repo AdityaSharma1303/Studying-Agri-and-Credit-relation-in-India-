@@ -1,3 +1,9 @@
+** This is very much a learning project, and I would genuinely appreciate any
+feedback, corrections, or suggestions. Feel free to reach out at
+adityasharma13032003@gmail.com. ***
+
+
+
 
 India's premier crop insurance scheme, Pradhan Mantri Fasal Beema Yojna, used to be automatic before 2020: if you took
 out a farm loan, you were signed up for insurance with the premium deducted
